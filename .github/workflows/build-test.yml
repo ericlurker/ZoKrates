@@ -45,10 +45,6 @@ jobs:
         run: cargo clippy -j 4 -- -D warnings
       #- name: Cpp format
       #  run: run-clang-format.py -r $(pwd)/zokrates_core/lib
-      - name: Wasm test
-        run: |
-          cd zokrates_core
-          wasm-pack test --firefox --headless -- --no-default-features --features "wasm ark"
       # - name: Save sccache cache
       #   uses: actions/cache@v3
       #   with:
@@ -80,6 +76,20 @@ jobs:
       - name: Run integration tests
         timeout-minutes: 60
         run: WITH_LIBSNARK=1 RUSTFLAGS="-D warnings" ./integration_test.sh
+
+  wasm-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Wasm test
+        run: |
+          cd zokrates_core
+          wasm-pack test --firefox --headless -- --no-default-features --features "wasm ark"
 
   build-and-test-js:
     runs-on: ubuntu-latest
