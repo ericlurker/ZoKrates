@@ -1,4 +1,4 @@
-use ethabi::{Contract as ContractAbi, Token, ParamType};
+use ethabi::{Contract as ContractAbi, ParamType, Token};
 use serde_json::{from_str, json};
 use solc::compile;
 
@@ -141,11 +141,15 @@ impl Contract {
     ) -> Result<Vec<u8>, Error> {
         match self.abi.functions.get(fn_name) {
             Some(f) => {
-                let params = f[0].inputs.iter().map(|p|p.kind.clone()).collect::<Vec<ParamType>>();
+                let params = f[0]
+                    .inputs
+                    .iter()
+                    .map(|p| p.kind.clone())
+                    .collect::<Vec<ParamType>>();
                 let items = params.iter().zip(input);
-                for item in items{
+                for item in items {
                     println!("type {} {}", item.1, *item.0);
-                    println!("param_type check {} ",item.1.type_check(item.0));
+                    println!("param_type check {} ", item.1.type_check(item.0));
                 }
                 let call_binary = f[0].encode_input(input).map_err(|_| {
                     Box::new(EvmTestError(

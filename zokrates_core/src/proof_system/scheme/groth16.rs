@@ -130,14 +130,14 @@ impl<T: SolidityCompatibleField> SolidityCompatibleScheme<T> for G16 {
         template_lib_text = re
             .replace_all(&template_lib_text, "uint256($v)")
             .to_string();
-        solidity_pairing_lib_sans_bn256g2 =  re
+        solidity_pairing_lib_sans_bn256g2 = re
             .replace_all(&solidity_pairing_lib_sans_bn256g2, "uint256($v)")
             .to_string();
 
         (
             solidity_pairing_lib_sans_bn256g2,
             template_text,
-            template_lib_text
+            template_lib_text,
         )
     }
 }

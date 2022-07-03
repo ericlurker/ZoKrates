@@ -150,7 +150,7 @@ impl<T: SolidityCompatibleField + NotBw6_761Field> SolidityCompatibleScheme<T> f
         (
             format!("{}{}", SOLIDITY_G2_ADDITION_LIB, solidity_pairing_lib,),
             template_text,
-            template_lib_text
+            template_lib_text,
         )
     }
 }

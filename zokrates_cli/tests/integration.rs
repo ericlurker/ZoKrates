@@ -351,7 +351,12 @@ mod integration {
                                 File::open(proof_path.to_str().unwrap()).unwrap(),
                             )
                             .unwrap();
-                            contract_str = joining_solidity_verifier(pairing_str, lib_str, contract_str, proof.inputs.len() );
+                            contract_str = joining_solidity_verifier(
+                                pairing_str,
+                                lib_str,
+                                contract_str,
+                                proof.inputs.len(),
+                            );
                             test_solidity_verifier(contract_str, proof);
                         }
                         "g16" => {
@@ -360,7 +365,12 @@ mod integration {
                                 File::open(proof_path.to_str().unwrap()).unwrap(),
                             )
                             .unwrap();
-                            contract_str = joining_solidity_verifier(pairing_str, lib_str, contract_str, proof.inputs.len() );
+                            contract_str = joining_solidity_verifier(
+                                pairing_str,
+                                lib_str,
+                                contract_str,
+                                proof.inputs.len(),
+                            );
                             test_solidity_verifier(contract_str, proof);
                         }
                         "gm17" => {
@@ -369,7 +379,12 @@ mod integration {
                                 File::open(proof_path.to_str().unwrap()).unwrap(),
                             )
                             .unwrap();
-                            contract_str = joining_solidity_verifier(pairing_str, lib_str, contract_str, proof.inputs.len() );
+                            contract_str = joining_solidity_verifier(
+                                pairing_str,
+                                lib_str,
+                                contract_str,
+                                proof.inputs.len(),
+                            );
                             test_solidity_verifier(contract_str, proof);
                         }
                         "pghr13" => {
@@ -378,7 +393,12 @@ mod integration {
                                 File::open(proof_path.to_str().unwrap()).unwrap(),
                             )
                             .unwrap();
-                            contract_str = joining_solidity_verifier(pairing_str, lib_str, contract_str, proof.inputs.len() );
+                            contract_str = joining_solidity_verifier(
+                                pairing_str,
+                                lib_str,
+                                contract_str,
+                                proof.inputs.len(),
+                            );
                             test_solidity_verifier(contract_str, proof);
                         }
                         _ => unreachable!(),
@@ -406,7 +426,12 @@ mod integration {
         verifier_replace = rp.replace_all(&verifier_replace, "").to_string();
         verifier_replace = rl.replace_all(&verifier_replace, "").to_string();
 
-        verifier_replace = ra.replace_all(&verifier_replace, format!("uint[{}] memory input", input_size).as_str()).to_string();
+        verifier_replace = ra
+            .replace_all(
+                &verifier_replace,
+                format!("uint[{}] memory input", input_size).as_str(),
+            )
+            .to_string();
 
         format!("{}{}{}", pairing, verifier_lib_replace, verifier_replace)
     }
@@ -489,7 +514,7 @@ mod integration {
             .unwrap();
 
         assert_eq!(&result.out, &to_be_bytes(&U256::from(1)));
-        if src.len()>0 {
+        if src.len() > 0 {
             return;
         }
 
