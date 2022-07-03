@@ -53,7 +53,7 @@ jobs:
           cd zokrates_core
           wasm-pack test --firefox --headless -- --no-default-features --features "wasm ark"
       - name: Run integration tests
-        timeout-minutes: 30
+        timeout-minutes: 60
         run: WITH_LIBSNARK=1 RUSTFLAGS="-D warnings" ./integration_test.sh
       # - name: Save sccache cache
       #   uses: actions/cache@v3
