@@ -95,7 +95,6 @@ fn cli_export_verifier<T: SolidityCompatibleField, S: SolidityCompatibleScheme<T
         .map_err(|why| format!("Could not deserialize verification key: {}", why))?;
 
     let (pairing, verifier, verifier_lib) = S::export_solidity_verifier(vk);
-
     //write output file
     let verifier_output_path = Path::new(sub_matches.value_of("output").unwrap());
     let verifier_lib_output_path = verifier_output_path

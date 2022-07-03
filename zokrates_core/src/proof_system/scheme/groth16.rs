@@ -40,7 +40,7 @@ impl<T: SolidityCompatibleField> SolidityCompatibleScheme<T> for G16 {
     fn export_solidity_verifier(
         vk: <G16 as Scheme<T>>::VerificationKey,
     ) -> (String, String, String) {
-        let (mut template_text, mut template_lib_text, solidity_pairing_lib_sans_bn256g2) = (
+        let (mut template_text, mut template_lib_text, mut solidity_pairing_lib_sans_bn256g2) = (
             String::from(CONTRACT_TEMPLATE),
             String::from(CONTRACT_LIB_TEMPLATE),
             solidity_pairing_lib(false),
@@ -130,11 +130,14 @@ impl<T: SolidityCompatibleField> SolidityCompatibleScheme<T> for G16 {
         template_lib_text = re
             .replace_all(&template_lib_text, "uint256($v)")
             .to_string();
+        solidity_pairing_lib_sans_bn256g2 =  re
+            .replace_all(&solidity_pairing_lib_sans_bn256g2, "uint256($v)")
+            .to_string();
 
         (
             solidity_pairing_lib_sans_bn256g2,
             template_text,
-            template_lib_text,
+            template_lib_text
         )
     }
 }
@@ -149,14 +152,14 @@ const CONTRACT_LIB_TEMPLATE: &str = r#"
 pragma solidity ^0.8.0;
 import "./Pairing.sol";
 library VerifierLib {
-    struct VerifyingKey {
+    struct VerifyingKey1 {
         Pairing.G1Point alpha;
         Pairing.G2Point beta;
         Pairing.G2Point gamma;
         Pairing.G2Point delta;
         Pairing.G1Point[] gamma_abc;
     }
-    struct Proof {
+    struct Proof1 {
         Pairing.G1Point a;
         Pairing.G2Point b;
         Pairing.G1Point c;
@@ -175,7 +178,21 @@ pragma solidity ^0.8.0;
 import "./Pairing.sol";
 import "./VerifierLib.sol";
 contract Verifier {
-    function verifyingKey() pure internal returns (VerifierLib.VerifyingKey memory vk) {
+    struct VerifyingKey {
+        Pairing.G1Point alpha;
+        Pairing.G2Point beta;
+        Pairing.G2Point gamma;
+        Pairing.G2Point delta;
+        Pairing.G1Point[] gamma_abc;
+    }
+
+    struct Proof {
+        Pairing.G1Point a;
+        Pairing.G2Point b;
+        Pairing.G1Point c;
+    }
+
+    function verifyingKey() pure internal returns (VerifyingKey memory vk) {
         vk.alpha = Pairing.G1Point(<%vk_alpha%>);
         vk.beta = Pairing.G2Point(<%vk_beta%>);
         vk.gamma = Pairing.G2Point(<%vk_gamma%>);
@@ -183,9 +200,9 @@ contract Verifier {
         vk.gamma_abc = new Pairing.G1Point[](<%vk_gamma_abc_length%>);
         <%vk_gamma_abc_pts%>
     }
-    function verify(uint[] memory input, VerifierLib.Proof memory proof) internal view returns (bool) {
+    function verify(uint[] memory input, Proof memory proof) internal view returns (bool) {
         uint256 SNARK_SCALAR_FIELD = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
-        VerifierLib.VerifyingKey memory vk = verifyingKey();
+        VerifyingKey memory vk = verifyingKey();
         require(input.length + 1 == vk.gamma_abc.length);
         require(proof.a.X < SNARK_SCALAR_FIELD);
         require(proof.a.Y < SNARK_SCALAR_FIELD);
@@ -212,7 +229,7 @@ contract Verifier {
              Pairing.negate(proof.c), vk.delta,
              Pairing.negate(vk.alpha), vk.beta);
     }
-    function verifyTx(VerifierLib.Proof memory proof<%input_argument%>) public view returns (bool r) {
+    function verifyTx(Proof memory proof<%input_argument%>) public view returns (bool) {
         require(input.length == <%vk_input_length%>, "invalid input length");
         return verify(input, proof);
     }

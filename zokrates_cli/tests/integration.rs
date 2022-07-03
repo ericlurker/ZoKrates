@@ -343,17 +343,16 @@ mod integration {
                     let mut contract_str =
                         std::fs::read_to_string(verification_contract_path.to_str().unwrap())
                             .unwrap();
-                    contract_str = joining_solidity_verifier(pairing_str, lib_str, contract_str);
-                    println!("contract {}", contract_str);
+
                     match *scheme {
                         "marlin" => {
                             // Get the proof
-                            let _proof: Proof<Bn128Field, Marlin> = serde_json::from_reader(
+                            let proof: Proof<Bn128Field, Marlin> = serde_json::from_reader(
                                 File::open(proof_path.to_str().unwrap()).unwrap(),
                             )
                             .unwrap();
-
-                            // test_solidity_verifier(contract_str, proof);
+                            contract_str = joining_solidity_verifier(pairing_str, lib_str, contract_str, proof.inputs.len() );
+                            test_solidity_verifier(contract_str, proof);
                         }
                         "g16" => {
                             // Get the proof
@@ -361,26 +360,26 @@ mod integration {
                                 File::open(proof_path.to_str().unwrap()).unwrap(),
                             )
                             .unwrap();
-
+                            contract_str = joining_solidity_verifier(pairing_str, lib_str, contract_str, proof.inputs.len() );
                             test_solidity_verifier(contract_str, proof);
                         }
                         "gm17" => {
                             // Get the proof
-                            let _proof: Proof<Bn128Field, GM17> = serde_json::from_reader(
+                            let proof: Proof<Bn128Field, GM17> = serde_json::from_reader(
                                 File::open(proof_path.to_str().unwrap()).unwrap(),
                             )
                             .unwrap();
-
-                            // test_solidity_verifier(contract_str, proof);
+                            contract_str = joining_solidity_verifier(pairing_str, lib_str, contract_str, proof.inputs.len() );
+                            test_solidity_verifier(contract_str, proof);
                         }
                         "pghr13" => {
                             // Get the proof
-                            let _proof: Proof<Bn128Field, PGHR13> = serde_json::from_reader(
+                            let proof: Proof<Bn128Field, PGHR13> = serde_json::from_reader(
                                 File::open(proof_path.to_str().unwrap()).unwrap(),
                             )
                             .unwrap();
-
-                            // test_solidity_verifier(contract_str, proof);
+                            contract_str = joining_solidity_verifier(pairing_str, lib_str, contract_str, proof.inputs.len() );
+                            test_solidity_verifier(contract_str, proof);
                         }
                         _ => unreachable!(),
                     }
@@ -393,10 +392,12 @@ mod integration {
         pairing: String,
         verifier_lib: String,
         verifier: String,
+        input_size: usize,
     ) -> String {
         let rs = Regex::new(r#"(pragma solidity .......)"#).unwrap();
         let rp = Regex::new(r#"(import "./Pairing.sol";)"#).unwrap();
         let rl = Regex::new(r#"(import "./VerifierLib.sol";)"#).unwrap();
+        let ra = Regex::new(r#"(uint.. memory input)"#).unwrap();
 
         let mut verifier_lib_replace = rs.replace_all(&verifier_lib, "").to_string();
         verifier_lib_replace = rp.replace_all(&verifier_lib_replace, "").to_string();
@@ -404,6 +405,8 @@ mod integration {
         let mut verifier_replace = rs.replace_all(&verifier, "").to_string();
         verifier_replace = rp.replace_all(&verifier_replace, "").to_string();
         verifier_replace = rl.replace_all(&verifier_replace, "").to_string();
+
+        verifier_replace = ra.replace_all(&verifier_replace, format!("uint[{}] memory input", input_size).as_str()).to_string();
 
         format!("{}{}{}", pairing, verifier_lib_replace, verifier_replace)
     }
@@ -469,8 +472,8 @@ mod integration {
                 .collect::<Vec<_>>(),
         );
 
-        println!("proof {}",proof_token.clone());
-        println!("input {}",input_token.clone());
+        // println!("proof {}",proof_token.clone());
+        // println!("input {}",input_token.clone());
 
         let inputs = [proof_token, input_token.clone()];
 

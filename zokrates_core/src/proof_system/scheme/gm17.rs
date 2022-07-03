@@ -48,7 +48,7 @@ impl<T: SolidityCompatibleField + NotBw6_761Field> SolidityCompatibleScheme<T> f
     fn export_solidity_verifier(
         vk: <GM17 as Scheme<T>>::VerificationKey,
     ) -> (String, String, String) {
-        let (mut template_text, mut template_lib_text, solidity_pairing_lib) = (
+        let (mut template_text, mut template_lib_text, mut solidity_pairing_lib) = (
             String::from(CONTRACT_TEMPLATE),
             String::from(CONTRACT_LIB_TEMPLATE),
             solidity_pairing_lib(true),
@@ -143,11 +143,14 @@ impl<T: SolidityCompatibleField + NotBw6_761Field> SolidityCompatibleScheme<T> f
         template_lib_text = re
             .replace_all(&template_lib_text, "uint256($v)")
             .to_string();
+        solidity_pairing_lib = re
+            .replace_all(&solidity_pairing_lib, "uint256($v)")
+            .to_string();
 
         (
             format!("{}{}", SOLIDITY_G2_ADDITION_LIB, solidity_pairing_lib,),
             template_text,
-            template_lib_text,
+            template_lib_text
         )
     }
 }
@@ -198,7 +201,7 @@ contract Verifier {
         vk.query = new Pairing.G1Point[](<%vk_query_length%>);
         <%vk_query_pts%>
     }
-    function verify(uint[] memory input, VerifierLib.Proof memory proof) internal view returns (uint) {
+    function verify(uint[] memory input, VerifierLib.Proof memory proof) internal view returns (bool) {
         uint256 snark_scalar_field = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
         VerifierLib.VerifyingKey memory vk = verifyingKey();
         require(input.length + 1 == vk.query.length);
@@ -214,23 +217,18 @@ contract Verifier {
          *                              * e(C, H)
          * where psi = \sum_{i=0}^l input_i pvk.query[i]
          */
-        if (!Pairing.pairingProd4(vk.g_alpha, vk.h_beta, vk_x, vk.h_gamma, proof.c, vk.h, Pairing.negate(Pairing.addition(proof.a, vk.g_alpha)), Pairing.addition(proof.b, vk.h_beta))) return 1;
+        if (!Pairing.pairingProd4(vk.g_alpha, vk.h_beta, vk_x, vk.h_gamma, proof.c, vk.h, Pairing.negate(Pairing.addition(proof.a, vk.g_alpha)), Pairing.addition(proof.b, vk.h_beta))) return false;
         /**
          * e(A, H^{gamma}) = e(G^{gamma}, B)
          */
-        if (!Pairing.pairingProd2(proof.a, vk.h_gamma, Pairing.negate(vk.g_gamma), proof.b)) return 2;
-        return 0;
+        if (!Pairing.pairingProd2(proof.a, vk.h_gamma, Pairing.negate(vk.g_gamma), proof.b)) return false;
+        return true;
     }
     function verifyTx(
             VerifierLib.Proof memory proof<%input_argument%>
-        ) public view returns (bool r) {
-        uint[] memory inputValues = new uint[](<%vk_input_length%>);
-        <%input_loop%>
-        if (verify(inputValues, proof) == 0) {
-            return true;
-        } else {
-            return false;
-        }
+        ) public view returns (bool) {
+        require(input.length == <%vk_input_length%>, "invalid input length");
+        return verify(input, proof);
     }
 }
 "#;

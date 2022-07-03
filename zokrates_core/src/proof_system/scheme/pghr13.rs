@@ -45,7 +45,7 @@ impl<T: SolidityCompatibleField> SolidityCompatibleScheme<T> for PGHR13 {
     fn export_solidity_verifier(
         vk: <PGHR13 as Scheme<T>>::VerificationKey,
     ) -> (String, String, String) {
-        let (mut template_text, mut template_lib_text, solidity_pairing_lib) = (
+        let (mut template_text, mut template_lib_text, mut solidity_pairing_lib) = (
             String::from(CONTRACT_TEMPLATE),
             String::from(CONTRACT_LIB_TEMPLATE),
             solidity_pairing_lib(false),
@@ -145,6 +145,9 @@ impl<T: SolidityCompatibleField> SolidityCompatibleScheme<T> for PGHR13 {
         template_lib_text = re
             .replace_all(&template_lib_text, "uint256($v)")
             .to_string();
+        solidity_pairing_lib = re
+            .replace_all(&solidity_pairing_lib, "uint256($v)")
+            .to_string();
 
         (solidity_pairing_lib, template_text, template_lib_text)
     }
@@ -217,31 +220,26 @@ contract Verifier {
             vk_x = Pairing.addition(vk_x, Pairing.scalar_mul(vk.ic[i + 1], input[i]));
         }
         vk_x = Pairing.addition(vk_x, vk.ic[0]);
-        if (!Pairing.pairingProd2(proof.a, vk.a, Pairing.negate(proof.a_p), Pairing.P2())) return 1;
-        if (!Pairing.pairingProd2(vk.b, proof.b, Pairing.negate(proof.b_p), Pairing.P2())) return 2;
-        if (!Pairing.pairingProd2(proof.c, vk.c, Pairing.negate(proof.c_p), Pairing.P2())) return 3;
+        if (!Pairing.pairingProd2(proof.a, vk.a, Pairing.negate(proof.a_p), Pairing.P2())) return false;
+        if (!Pairing.pairingProd2(vk.b, proof.b, Pairing.negate(proof.b_p), Pairing.P2())) return false;
+        if (!Pairing.pairingProd2(proof.c, vk.c, Pairing.negate(proof.c_p), Pairing.P2())) return false;
         if (!Pairing.pairingProd3(
             proof.k, vk.gamma,
             Pairing.negate(Pairing.addition(vk_x, Pairing.addition(proof.a, proof.c))), vk.gamma_beta_2,
             Pairing.negate(vk.gamma_beta_1), proof.b
-        )) return 4;
+        )) return false;
         if (!Pairing.pairingProd3(
                 Pairing.addition(vk_x, proof.a), proof.b,
                 Pairing.negate(proof.h), vk.z,
                 Pairing.negate(proof.c), Pairing.P2()
-        )) return 5;
-        return 0;
+        )) return false;
+        return true;
     }
     function verifyTx(
             VerifierLib.Proof memory proof<%input_argument%>
-        ) public view returns (bool r) {
-        uint[] memory inputValues = new uint[](<%vk_input_length%>);
-        <%input_loop%>
-        if (verify(inputValues, proof) == 0) {
-            return true;
-        } else {
-            return false;
-        }
+        ) public view returns (bool) {
+        require(input.length == <%vk_input_length%>, "invalid input length");
+        return verify(input, proof);
     }
 }
 "#;
