@@ -145,9 +145,6 @@ impl<T: SolidityCompatibleField> SolidityCompatibleScheme<T> for PGHR13 {
         template_lib_text = re
             .replace_all(&template_lib_text, "uint256($v)")
             .to_string();
-        solidity_pairing_lib = re
-            .replace_all(&solidity_pairing_lib, "uint256($v)")
-            .to_string();
 
         (solidity_pairing_lib, template_text, template_lib_text)
     }

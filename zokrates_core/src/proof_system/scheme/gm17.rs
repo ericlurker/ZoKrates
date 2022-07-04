@@ -143,9 +143,6 @@ impl<T: SolidityCompatibleField + NotBw6_761Field> SolidityCompatibleScheme<T> f
         template_lib_text = re
             .replace_all(&template_lib_text, "uint256($v)")
             .to_string();
-        solidity_pairing_lib = re
-            .replace_all(&solidity_pairing_lib, "uint256($v)")
-            .to_string();
 
         (
             format!("{}{}", SOLIDITY_G2_ADDITION_LIB, solidity_pairing_lib,),
