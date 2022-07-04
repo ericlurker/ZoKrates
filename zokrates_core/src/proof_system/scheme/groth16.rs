@@ -152,14 +152,14 @@ const CONTRACT_LIB_TEMPLATE: &str = r#"
 pragma solidity ^0.8.0;
 import "./Pairing.sol";
 library VerifierLib {
-    struct VerifyingKey1 {
+    struct VerifyingKey {
         Pairing.G1Point alpha;
         Pairing.G2Point beta;
         Pairing.G2Point gamma;
         Pairing.G2Point delta;
         Pairing.G1Point[] gamma_abc;
     }
-    struct Proof1 {
+    struct Proof {
         Pairing.G1Point a;
         Pairing.G2Point b;
         Pairing.G1Point c;
@@ -178,21 +178,7 @@ pragma solidity ^0.8.0;
 import "./Pairing.sol";
 import "./VerifierLib.sol";
 contract Verifier {
-    struct VerifyingKey {
-        Pairing.G1Point alpha;
-        Pairing.G2Point beta;
-        Pairing.G2Point gamma;
-        Pairing.G2Point delta;
-        Pairing.G1Point[] gamma_abc;
-    }
-
-    struct Proof {
-        Pairing.G1Point a;
-        Pairing.G2Point b;
-        Pairing.G1Point c;
-    }
-
-    function verifyingKey() pure internal returns (VerifyingKey memory vk) {
+    function verifyingKey() pure internal returns (VerifierLib.VerifyingKey memory vk) {
         vk.alpha = Pairing.G1Point(<%vk_alpha%>);
         vk.beta = Pairing.G2Point(<%vk_beta%>);
         vk.gamma = Pairing.G2Point(<%vk_gamma%>);
@@ -200,9 +186,9 @@ contract Verifier {
         vk.gamma_abc = new Pairing.G1Point[](<%vk_gamma_abc_length%>);
         <%vk_gamma_abc_pts%>
     }
-    function verify(uint[] memory input, Proof memory proof) internal view returns (bool) {
+    function verify(uint[] memory input, VerifierLib.Proof memory proof) internal view returns (bool) {
         uint256 SNARK_SCALAR_FIELD = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
-        VerifyingKey memory vk = verifyingKey();
+        VerifierLib.VerifyingKey memory vk = verifyingKey();
         require(input.length + 1 == vk.gamma_abc.length);
         require(proof.a.X < SNARK_SCALAR_FIELD);
         require(proof.a.Y < SNARK_SCALAR_FIELD);
@@ -229,7 +215,7 @@ contract Verifier {
              Pairing.negate(proof.c), vk.delta,
              Pairing.negate(vk.alpha), vk.beta);
     }
-    function verifyTx(Proof memory proof<%input_argument%>) public view returns (bool) {
+    function verifyTx(VerifierLib.Proof memory proof<%input_argument%>) public view returns (bool r) {
         require(input.length == <%vk_input_length%>, "invalid input length");
         return verify(input, proof);
     }

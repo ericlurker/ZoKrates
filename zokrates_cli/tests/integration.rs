@@ -497,9 +497,6 @@ mod integration {
                 .collect::<Vec<_>>(),
         );
 
-        // println!("proof {}",proof_token.clone());
-        // println!("input {}",input_token.clone());
-
         let inputs = [proof_token, input_token.clone()];
 
         // Call verify function on contract
@@ -514,9 +511,6 @@ mod integration {
             .unwrap();
 
         assert_eq!(&result.out, &to_be_bytes(&U256::from(1)));
-        if src.len() > 0 {
-            return;
-        }
 
         // modify the proof
         let modified_solidity_proof = S::modify(solidity_proof.clone());
