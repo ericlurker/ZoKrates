@@ -48,7 +48,7 @@ impl<T: SolidityCompatibleField + NotBw6_761Field> SolidityCompatibleScheme<T> f
     fn export_solidity_verifier(
         vk: <GM17 as Scheme<T>>::VerificationKey,
     ) -> (String, String, String) {
-        let (mut template_text, mut template_lib_text, mut solidity_pairing_lib) = (
+        let (mut template_text, mut template_lib_text, solidity_pairing_lib) = (
             String::from(CONTRACT_TEMPLATE),
             String::from(CONTRACT_LIB_TEMPLATE),
             solidity_pairing_lib(true),

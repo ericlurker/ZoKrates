@@ -45,7 +45,7 @@ impl<T: SolidityCompatibleField> SolidityCompatibleScheme<T> for PGHR13 {
     fn export_solidity_verifier(
         vk: <PGHR13 as Scheme<T>>::VerificationKey,
     ) -> (String, String, String) {
-        let (mut template_text, mut template_lib_text, mut solidity_pairing_lib) = (
+        let (mut template_text, mut template_lib_text, solidity_pairing_lib) = (
             String::from(CONTRACT_TEMPLATE),
             String::from(CONTRACT_LIB_TEMPLATE),
             solidity_pairing_lib(false),
