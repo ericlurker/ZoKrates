@@ -14,7 +14,7 @@ pub trait SolidityCompatibleScheme<T: SolidityCompatibleField>: Scheme<T> {
 
 pub const SOLIDITY_G2_ADDITION_LIB: &str = r#"// SPDX-License-Identifier: LGPL-3.0-only
 // This file is LGPL3 Licensed
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.7;
 
 /**
  * @title Elliptic curve operations on twist points for alt_bn128
@@ -417,7 +417,7 @@ pub fn solidity_pairing_lib(with_g2_addition: bool) -> String {
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.7;
 library Pairing {
     uint256 constant FIELD_MODULUS = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
     uint256 constant FIELD_SIZE = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
@@ -447,7 +447,7 @@ library Pairing {
     }
     /// @return the negation of p, i.e. p.addition(p.negate()) should be zero.
     function negate(G1Point memory p) pure internal returns (G1Point memory) {
-        uint256 fieldModulus = FIELD_MODULUS
+        uint256 fieldModulus = FIELD_MODULUS;
         if (p.Y == 0)
             return G1Point(p.X % fieldModulus, 0);
         return G1Point(p.X % fieldModulus, fieldModulus - (p.Y % fieldModulus));
