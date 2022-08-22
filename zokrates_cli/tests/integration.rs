@@ -504,7 +504,7 @@ mod integration {
             )
             .unwrap();
 
-        assert_eq!(result.op_out, Return::InvalidOpcode);
+        assert_eq!(result.op_out, Return::Revert);
     }
 
     fn test_compile_and_smtlib2(
