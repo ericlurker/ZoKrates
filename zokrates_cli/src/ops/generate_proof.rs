@@ -14,6 +14,8 @@ use zokrates_common::helpers::*;
 use zokrates_field::Field;
 #[cfg(any(feature = "bellman", feature = "ark"))]
 use zokrates_proof_systems::*;
+use crate::cli_constants::{write_benchmark, insert_benchmark, write_file};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub fn subcommand() -> App<'static, 'static> {
     SubCommand::with_name("generate-proof")
@@ -81,7 +83,7 @@ pub fn subcommand() -> App<'static, 'static> {
         )
 }
 
-pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
+pub unsafe fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     let program_path = Path::new(sub_matches.value_of("input").unwrap());
     let program_file = File::open(&program_path)
         .map_err(|why| format!("Could not open {}: {}", program_path.display(), why))?;
@@ -135,7 +137,7 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     }
 }
 
-fn cli_generate_proof<
+unsafe fn cli_generate_proof<
     T: Field,
     I: Iterator<Item = ir::Statement<T>>,
     S: Scheme<T>,
@@ -166,19 +168,27 @@ fn cli_generate_proof<
         .read_to_end(&mut pk)
         .map_err(|why| format!("Could not read {}: {}", pk_path.display(), why))?;
 
+    let benchmark_before =SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
     let proof = B::generate_proof(program, witness, pk);
-    let mut proof_file = File::create(proof_path).unwrap();
+    let benchmark_after = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
+    insert_benchmark(benchmark_before,benchmark_after);
 
-    let proof =
-        serde_json::to_string_pretty(&TaggedProof::<T, S>::new(proof.proof, proof.inputs)).unwrap();
-    proof_file
-        .write(proof.as_bytes())
-        .map_err(|why| format!("Could not write to {}: {}", proof_path.display(), why))?;
+    if (write_file){
+        let mut proof_file = File::create(proof_path).unwrap();
 
-    if sub_matches.is_present("verbose") {
-        println!("Proof:\n{}", proof);
+        let proof =
+            serde_json::to_string_pretty(&TaggedProof::<T, S>::new(proof.proof, proof.inputs)).unwrap();
+        proof_file
+            .write(proof.as_bytes())
+            .map_err(|why| format!("Could not write to {}: {}", proof_path.display(), why))?;
+
+        if sub_matches.is_present("verbose") {
+            println!("Proof:\n{}", proof);
+        }
+
+        println!("Proof written to '{}'", proof_path.display());
+
+        write_file = true;
     }
-
-    println!("Proof written to '{}'", proof_path.display());
     Ok(())
 }

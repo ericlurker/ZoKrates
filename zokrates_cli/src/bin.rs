@@ -14,6 +14,12 @@ mod ops;
 
 use clap::{App, AppSettings, Arg};
 use ops::*;
+use std::time::{SystemTime, UNIX_EPOCH};
+use std::fs::OpenOptions;
+use std::io::prelude::*;
+use crate::cli_constants::{write_benchmark, write_file};
+use std::ops::Sub;
+use std::borrow::Borrow;
 
 fn main() {
     // set a custom panic hook
@@ -21,13 +27,13 @@ fn main() {
 
     env_logger::init();
 
-    cli().unwrap_or_else(|e| {
+    unsafe { cli() }.unwrap_or_else(|e| {
         println!("{}", e);
         std::process::exit(1);
     })
 }
 
-fn cli() -> Result<(), String> {
+unsafe fn cli() -> Result<(), String> {
     // cli specification using clap library
     let matches = App::new("ZoKrates")
         .setting(AppSettings::SubcommandRequiredElseHelp)
@@ -60,26 +66,32 @@ fn cli() -> Result<(), String> {
             verify::subcommand()])
         .get_matches();
 
-    match matches.subcommand() {
-        ("compile", Some(sub_matches)) => compile::exec(sub_matches),
-        ("inspect", Some(sub_matches)) => inspect::exec(sub_matches),
-        ("check", Some(sub_matches)) => check::exec(sub_matches),
-        ("compute-witness", Some(sub_matches)) => compute_witness::exec(sub_matches),
-        #[cfg(feature = "ark")]
-        ("universal-setup", Some(sub_matches)) => universal_setup::exec(sub_matches),
-        #[cfg(feature = "bellman")]
-        ("mpc", Some(sub_matches)) => mpc::exec(sub_matches),
-        #[cfg(any(feature = "bellman", feature = "ark"))]
-        ("setup", Some(sub_matches)) => setup::exec(sub_matches),
-        ("export-verifier", Some(sub_matches)) => export_verifier::exec(sub_matches),
-        #[cfg(any(feature = "bellman", feature = "ark"))]
-        ("generate-proof", Some(sub_matches)) => generate_proof::exec(sub_matches),
-        ("generate-smtlib2", Some(sub_matches)) => generate_smtlib2::exec(sub_matches),
-        ("print-proof", Some(sub_matches)) => print_proof::exec(sub_matches),
-        #[cfg(any(feature = "bellman", feature = "ark"))]
-        ("verify", Some(sub_matches)) => verify::exec(sub_matches),
-        _ => unreachable!(),
+    write_file=true;
+    for i in 0..40{
+        let result = match matches.subcommand() {
+            ("compile", Some(sub_matches)) => compile::exec(sub_matches),
+            ("inspect", Some(sub_matches)) => inspect::exec(sub_matches),
+            ("check", Some(sub_matches)) => check::exec(sub_matches),
+            ("compute-witness", Some(sub_matches)) => compute_witness::exec(sub_matches),
+            #[cfg(feature = "ark")]
+            ("universal-setup", Some(sub_matches)) => universal_setup::exec(sub_matches),
+            #[cfg(feature = "bellman")]
+            ("mpc", Some(sub_matches)) => mpc::exec(sub_matches),
+            #[cfg(any(feature = "bellman", feature = "ark"))]
+            ("setup", Some(sub_matches)) => setup::exec(sub_matches),
+            ("export-verifier", Some(sub_matches)) => export_verifier::exec(sub_matches),
+            #[cfg(any(feature = "bellman", feature = "ark"))]
+            ("generate-proof", Some(sub_matches)) => generate_proof::exec(sub_matches),
+            ("generate-smtlib2", Some(sub_matches)) => generate_smtlib2::exec(sub_matches),
+            ("print-proof", Some(sub_matches)) => print_proof::exec(sub_matches),
+            #[cfg(any(feature = "bellman", feature = "ark"))]
+            ("verify", Some(sub_matches)) => verify::exec(sub_matches),
+            _ => unreachable!(),
+        };
     }
+    let cmd = matches.subcommand();
+    write_benchmark(cmd.0);
+    Ok(())
 }
 
 fn panic_hook(pi: &std::panic::PanicInfo) {
