@@ -627,8 +627,8 @@ mod integration {
     #[test]
     #[ignore]
     fn test_mpc_tutorial() {
-        let tmp_dir = TempDir::new(".tmp").unwrap();
-        let tmp_base = tmp_dir.path();
+        let tmp_dir1 = TempDir::new(".tmp").unwrap();
+        let tmp_base = tmp_dir1.path();
 
         let mut options = CopyOptions::new();
         options.copy_inside = true;
