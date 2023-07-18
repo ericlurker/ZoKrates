@@ -12,9 +12,6 @@ use zokrates_ast::typed::{
 };
 use zokrates_circom::write_witness;
 use zokrates_field::Field;
-use crate::cli_constants::{write_benchmark, insert_benchmark, write_file};
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::borrow::{Borrow, BorrowMut};
 
 pub fn subcommand() -> App<'static, 'static> {
     SubCommand::with_name("compute-witness")
@@ -69,14 +66,18 @@ pub fn subcommand() -> App<'static, 'static> {
         .help("Read arguments from stdin")
         .conflicts_with("arguments")
         .required(false)
+    ).arg(Arg::with_name("json")
+        .long("json")
+        .help("Write witness in a json format for debugging purposes")
+        .required(false)
     )
 }
 
-pub unsafe fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
+pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     // read compiled program
     let path = Path::new(sub_matches.value_of("input").unwrap());
     let file =
-        File::open(&path).map_err(|why| format!("Could not open {}: {}", path.display(), why))?;
+        File::open(path).map_err(|why| format!("Could not open {}: {}", path.display(), why))?;
 
     let mut reader = BufReader::new(file);
 
@@ -85,11 +86,13 @@ pub unsafe fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
         ProgEnum::Bls12_377Program(p) => cli_compute(p, sub_matches),
         ProgEnum::Bls12_381Program(p) => cli_compute(p, sub_matches),
         ProgEnum::Bw6_761Program(p) => cli_compute(p, sub_matches),
+        ProgEnum::PallasProgram(p) => cli_compute(p, sub_matches),
+        ProgEnum::VestaProgram(p) => cli_compute(p, sub_matches),
     }
 }
 
-unsafe fn cli_compute<T: Field, I: Iterator<Item = ir::Statement<T>>>(
-    ir_prog: ir::ProgIterator<T, I>,
+fn cli_compute<'a, T: Field, I: Iterator<Item = ir::Statement<'a, T>>>(
+    ir_prog: ir::ProgIterator<'a, T, I>,
     sub_matches: &ArgMatches,
 ) -> Result<(), String> {
     println!("Computing witness...");
@@ -105,7 +108,7 @@ unsafe fn cli_compute<T: Field, I: Iterator<Item = ir::Statement<T>>>(
     let signature = match is_abi {
         true => {
             let path = Path::new(sub_matches.value_of("abi-spec").unwrap());
-            let file = File::open(&path)
+            let file = File::open(path)
                 .map_err(|why| format!("Could not open {}: {}", path.display(), why))?;
             let mut reader = BufReader::new(file);
 
@@ -171,51 +174,61 @@ unsafe fn cli_compute<T: Field, I: Iterator<Item = ir::Statement<T>>>(
     .map_err(|e| format!("Could not parse argument: {}", e))?;
 
     let interpreter = zokrates_interpreter::Interpreter::default();
-
     let public_inputs = ir_prog.public_inputs();
 
-    let benchmark_before =SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
     let witness = interpreter
-        .execute_with_log_stream(ir_prog, &arguments.encode(), &mut std::io::sink())
+        .execute_with_log_stream(
+            &arguments.encode(),
+            ir_prog.statements,
+            &ir_prog.arguments,
+            &ir_prog.solvers,
+            &mut std::io::stdout(),
+        )
         .map_err(|e| format!("Execution failed: {}", e))?;
-    let benchmark_after = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
 
-    insert_benchmark(benchmark_before,benchmark_after);
+    use zokrates_abi::Decode;
 
-    if (write_file){
-        use zokrates_abi::Decode;
+    let results_json_value: serde_json::Value =
+        zokrates_abi::Value::decode(witness.return_values(), *signature.output).into_serde_json();
 
-        let results_json_value: serde_json::Value =
-            zokrates_abi::Value::decode(witness.return_values(), *signature.output).into_serde_json();
-
-        if verbose {
-            println!("\nWitness: \n{}\n", results_json_value);
-        }
-
-        // write witness to file
-        let output_path = Path::new(sub_matches.value_of("output").unwrap());
-        let output_file = File::create(&output_path)
-            .map_err(|why| format!("Could not create {}: {}", output_path.display(), why))?;
-
-        let writer = BufWriter::new(output_file);
-        witness
-            .write(writer)
-            .map_err(|why| format!("Could not save witness: {:?}", why))?;
-
-        // write circom witness to file
-        let wtns_path = Path::new(sub_matches.value_of("circom-witness").unwrap());
-        let wtns_file = File::create(&wtns_path)
-            .map_err(|why| format!("Could not create {}: {}", output_path.display(), why))?;
-
-        let mut writer = BufWriter::new(wtns_file);
-
-        write_witness(&mut writer, witness, public_inputs)
-            .map_err(|why| format!("Could not save circom witness: {:?}", why))?;
-
-        println!("Witness file written to '{}'", output_path.display());
-
-        write_file=true;
+    if verbose {
+        println!("\nWitness: \n{}\n", results_json_value);
     }
 
+    // write witness to file
+    let output_path = Path::new(sub_matches.value_of("output").unwrap());
+    let output_file = File::create(output_path)
+        .map_err(|why| format!("Could not create {}: {}", output_path.display(), why))?;
+
+    let writer = BufWriter::new(output_file);
+
+    witness
+        .write(writer)
+        .map_err(|why| format!("Could not save witness: {:?}", why))?;
+
+    // write witness in the json format
+    if sub_matches.is_present("json") {
+        let json_path = Path::new(sub_matches.value_of("output").unwrap()).with_extension("json");
+        let json_file = File::create(&json_path)
+            .map_err(|why| format!("Could not create {}: {}", json_path.display(), why))?;
+
+        let writer = BufWriter::new(json_file);
+
+        witness
+            .write_json(writer)
+            .map_err(|why| format!("Could not save {}: {:?}", json_path.display(), why))?;
+    }
+
+    // write circom witness to file
+    let wtns_path = Path::new(sub_matches.value_of("circom-witness").unwrap());
+    let wtns_file = File::create(wtns_path)
+        .map_err(|why| format!("Could not create {}: {}", output_path.display(), why))?;
+
+    let mut writer = BufWriter::new(wtns_file);
+
+    write_witness(&mut writer, witness, public_inputs)
+        .map_err(|why| format!("Could not save circom witness: {:?}", why))?;
+
+    println!("Witness file written to '{}'", output_path.display());
     Ok(())
 }

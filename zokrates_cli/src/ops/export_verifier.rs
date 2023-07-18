@@ -35,7 +35,7 @@ pub fn subcommand() -> App<'static, 'static> {
 
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     let vk_path = Path::new(sub_matches.value_of("input").unwrap());
-    let vk_file = File::open(&vk_path)
+    let vk_file = File::open(vk_path)
         .map_err(|why| format!("Could not open {}: {}", vk_path.display(), why))?;
 
     // deserialize vk to JSON
@@ -80,6 +80,7 @@ fn cli_export_verifier<T: SolidityCompatibleField, S: SolidityCompatibleScheme<T
 
     let vk = serde_json::from_value(vk).map_err(|why| format!("{}", why))?;
 
+    // modify begin
     let (pairing, verifier, verifier_lib) = S::export_solidity_verifier(vk);
 
     //write output file
@@ -89,6 +90,9 @@ fn cli_export_verifier<T: SolidityCompatibleField, S: SolidityCompatibleScheme<T
         .unwrap()
         .join("VerifierLib.sol");
     let pairing_output_path = verifier_output_path.parent().unwrap().join("Pairing.sol");
+    let output_path = Path::new(sub_matches.value_of("output").unwrap());
+    let output_file = File::create(output_path)
+        .map_err(|why| format!("Could not create {}: {}", output_path.display(), why))?;
 
     // pairing sol
     let pairing_output_file = File::create(&pairing_output_path).map_err(|why| {
@@ -130,5 +134,6 @@ fn cli_export_verifier<T: SolidityCompatibleField, S: SolidityCompatibleScheme<T
         .map_err(|_| "Failed writing verifier output to file".to_string())?;
 
     println!("Verifier exported to '{}'", verifier_output_path.display());
+    // modify end
     Ok(())
 }

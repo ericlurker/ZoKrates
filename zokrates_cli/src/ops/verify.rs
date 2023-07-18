@@ -13,8 +13,6 @@ use zokrates_common::helpers::*;
 use zokrates_field::{Bls12_377Field, Bls12_381Field, Bn128Field, Bw6_761Field, Field};
 #[cfg(any(feature = "bellman", feature = "ark"))]
 use zokrates_proof_systems::*;
-use crate::cli_constants::{write_benchmark, insert_benchmark};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 pub fn subcommand() -> App<'static, 'static> {
     SubCommand::with_name("verify")
@@ -53,7 +51,7 @@ pub fn subcommand() -> App<'static, 'static> {
 
 pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
     let vk_path = Path::new(sub_matches.value_of("verification-key-path").unwrap());
-    let vk_file = File::open(&vk_path)
+    let vk_file = File::open(vk_path)
         .map_err(|why| format!("Could not open {}: {}", vk_path.display(), why))?;
 
     // deserialize vk to JSON
@@ -62,7 +60,7 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
         .map_err(|why| format!("Could not deserialize verification key: {}", why))?;
 
     let proof_path = Path::new(sub_matches.value_of("proof-path").unwrap());
-    let proof_file = File::open(&proof_path)
+    let proof_file = File::open(proof_path)
         .map_err(|why| format!("Could not open {}: {}", proof_path.display(), why))?;
 
     // deserialize proof to JSON
@@ -115,66 +113,66 @@ pub fn exec(sub_matches: &ArgMatches) -> Result<(), String> {
 
     match parameters {
         #[cfg(feature = "bellman")]
-        Parameters(BackendParameter::Bellman, CurveParameter::Bn128, SchemeParameter::G16) => unsafe {
+        Parameters(BackendParameter::Bellman, CurveParameter::Bn128, SchemeParameter::G16) => {
             cli_verify::<Bn128Field, G16, Bellman>(vk, proof)
         }
         #[cfg(feature = "bellman")]
-        Parameters(BackendParameter::Bellman, CurveParameter::Bls12_381, SchemeParameter::G16) => unsafe {
+        Parameters(BackendParameter::Bellman, CurveParameter::Bls12_381, SchemeParameter::G16) => {
             cli_verify::<Bls12_381Field, G16, Bellman>(vk, proof)
         }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bn128, SchemeParameter::G16) => unsafe {
+        Parameters(BackendParameter::Ark, CurveParameter::Bn128, SchemeParameter::G16) => {
             cli_verify::<Bn128Field, G16, Ark>(vk, proof)
         }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bls12_381, SchemeParameter::G16) => unsafe {
+        Parameters(BackendParameter::Ark, CurveParameter::Bls12_381, SchemeParameter::G16) => {
             cli_verify::<Bls12_381Field, G16, Ark>(vk, proof)
         }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bls12_377, SchemeParameter::G16) => unsafe {
+        Parameters(BackendParameter::Ark, CurveParameter::Bls12_377, SchemeParameter::G16) => {
             cli_verify::<Bls12_377Field, G16, Ark>(vk, proof)
         }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bw6_761, SchemeParameter::G16) => unsafe {
+        Parameters(BackendParameter::Ark, CurveParameter::Bw6_761, SchemeParameter::G16) => {
             cli_verify::<Bw6_761Field, G16, Ark>(vk, proof)
         }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bn128, SchemeParameter::GM17) => unsafe {
+        Parameters(BackendParameter::Ark, CurveParameter::Bn128, SchemeParameter::GM17) => {
             cli_verify::<Bn128Field, GM17, Ark>(vk, proof)
         }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bls12_381, SchemeParameter::GM17) => unsafe {
+        Parameters(BackendParameter::Ark, CurveParameter::Bls12_381, SchemeParameter::GM17) => {
             cli_verify::<Bls12_381Field, GM17, Ark>(vk, proof)
         }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bls12_377, SchemeParameter::GM17) => unsafe {
+        Parameters(BackendParameter::Ark, CurveParameter::Bls12_377, SchemeParameter::GM17) => {
             cli_verify::<Bls12_377Field, GM17, Ark>(vk, proof)
         }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bw6_761, SchemeParameter::GM17) => unsafe {
+        Parameters(BackendParameter::Ark, CurveParameter::Bw6_761, SchemeParameter::GM17) => {
             cli_verify::<Bw6_761Field, GM17, Ark>(vk, proof)
         }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bn128, SchemeParameter::MARLIN) => unsafe {
+        Parameters(BackendParameter::Ark, CurveParameter::Bn128, SchemeParameter::MARLIN) => {
             cli_verify::<Bn128Field, Marlin, Ark>(vk, proof)
         }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bls12_381, SchemeParameter::MARLIN) => unsafe {
+        Parameters(BackendParameter::Ark, CurveParameter::Bls12_381, SchemeParameter::MARLIN) => {
             cli_verify::<Bls12_381Field, Marlin, Ark>(vk, proof)
         }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bls12_377, SchemeParameter::MARLIN) => unsafe {
+        Parameters(BackendParameter::Ark, CurveParameter::Bls12_377, SchemeParameter::MARLIN) => {
             cli_verify::<Bls12_377Field, Marlin, Ark>(vk, proof)
         }
         #[cfg(feature = "ark")]
-        Parameters(BackendParameter::Ark, CurveParameter::Bw6_761, SchemeParameter::MARLIN) => unsafe {
+        Parameters(BackendParameter::Ark, CurveParameter::Bw6_761, SchemeParameter::MARLIN) => {
             cli_verify::<Bw6_761Field, Marlin, Ark>(vk, proof)
         }
         _ => unreachable!(),
     }
 }
 
-unsafe fn cli_verify<T: Field, S: Scheme<T>, B: Backend<T, S>>(
+fn cli_verify<T: Field, S: Scheme<T>, B: Backend<T, S>>(
     vk: serde_json::Value,
     proof: serde_json::Value,
 ) -> Result<(), String> {
@@ -185,7 +183,6 @@ unsafe fn cli_verify<T: Field, S: Scheme<T>, B: Backend<T, S>>(
         .map_err(|why| format!("Could not deserialize proof: {}", why))?;
 
     println!("Performing verification...");
-    let benchmark_before =SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
     println!(
         "{}",
         match B::verify(vk, proof) {
@@ -193,8 +190,6 @@ unsafe fn cli_verify<T: Field, S: Scheme<T>, B: Backend<T, S>>(
             false => "FAILED",
         }
     );
-    let benchmark_after = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
-    insert_benchmark(benchmark_before,benchmark_after);
 
     Ok(())
 }
