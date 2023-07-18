@@ -19,19 +19,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - TARGET: aarch64-unknown-linux-gnu
-            OS: ubuntu-latest
-          - TARGET: arm-unknown-linux-gnueabihf
-            OS: ubuntu-latest
+#          - TARGET: aarch64-unknown-linux-gnu
+#            OS: ubuntu-latest
+#          - TARGET: arm-unknown-linux-gnueabihf
+#            OS: ubuntu-latest
           - TARGET: x86_64-unknown-linux-gnu
             OS: ubuntu-latest
-          - TARGET: x86_64-pc-windows-gnu
-            OS: windows-latest
-            Boost: true
+#          - TARGET: x86_64-pc-windows-gnu
+#            OS: windows-latest
+#            Boost: true
           - TARGET: x86_64-apple-darwin
             OS: macos-latest
-          - TARGET: aarch64-apple-darwin
-            OS: macos-latest
+#          - TARGET: aarch64-apple-darwin
+#            OS: macos-latest
     runs-on: ${{ matrix.OS }}
     env:
       NAME: zokrates
