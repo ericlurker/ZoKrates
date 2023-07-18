@@ -123,6 +123,7 @@ jobs:
         timeout-minutes: 30
         run: |
           cd zokrates_js
+          npm install -g wasm-pack
           npm run build:dev && npm pack --dry-run
       # Zokrates js test
       - name: Zokrates js check format

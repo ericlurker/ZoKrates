@@ -90,9 +90,6 @@ fn cli_export_verifier<T: SolidityCompatibleField, S: SolidityCompatibleScheme<T
         .unwrap()
         .join("VerifierLib.sol");
     let pairing_output_path = verifier_output_path.parent().unwrap().join("Pairing.sol");
-    let output_path = Path::new(sub_matches.value_of("output").unwrap());
-    let output_file = File::create(output_path)
-        .map_err(|why| format!("Could not create {}: {}", output_path.display(), why))?;
 
     // pairing sol
     let pairing_output_file = File::create(&pairing_output_path).map_err(|why| {
